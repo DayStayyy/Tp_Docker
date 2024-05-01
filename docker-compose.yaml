@@ -1,0 +1,60 @@
+services:
+  wordpress:
+    image: bitnami/wordpress:latest
+    restart: always
+    environment:
+      - WORDPRESS_DATABASE_HOST=db
+      - WORDPRESS_DATABASE_NAME=wordpress
+      - WORDPRESS_DATABASE_USER=wordpress
+      - WORDPRESS_DATABASE_PASSWORD=wordpress
+    volumes:
+      - wordpress:/var/www/html
+    depends_on:
+      - db
+      - redis
+    deploy:
+      replicas: 2
+    networks:
+      - frontend
+      - backend
+
+
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - backend
+
+  nginx:
+    image: bitnami/nginx:latest
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.conf:/opt/bitnami/nginx/conf/server_blocks/wordpress_proxy.conf:ro
+    depends_on:
+      - wordpress
+    networks:
+      - frontend
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+
+volumes:
+  wordpress:
+  db_data:
